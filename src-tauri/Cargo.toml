@@ -25,7 +25,18 @@ tauri = { version = "2.11.3", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-shell = "2"
-tokio = { version = "1", features = ["process", "io-util", "rt-multi-thread", "macros"] }
+tokio = { version = "1", features = ["process", "io-util", "rt-multi-thread", "macros", "sync"] }
+# Only pulled in by src/bin/server.rs (the standalone mobile-facing HTTP
+# server) — the desktop Tauri binary doesn't touch these.
+axum = { version = "0.7", features = ["json"] }
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+uuid = { version = "1", features = ["v4"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+[[bin]]
+name = "abductor-server"
+path = "src/bin/server.rs"
 
 [profile.release]
 opt-level = "z"

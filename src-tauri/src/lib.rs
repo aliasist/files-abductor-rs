@@ -1,8 +1,8 @@
-mod downloader;
+pub mod downloader;
 
 use downloader::{DownloadResult, DownloadState};
 use std::path::PathBuf;
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 
 #[tauri::command]
 fn get_dl_dir(app: AppHandle) -> String {
@@ -23,7 +23,19 @@ async fn download_file(
     save_path: String,
 ) -> Result<DownloadResult, String> {
     let child_state = state.current_child.clone();
-    Ok(downloader::download(app, child_state, url, save_path).await)
+    // The download engine emits progress over a plain channel (shared with
+    // the standalone mobile HTTP server, which has no AppHandle) — bridge
+    // that here into Tauri's own event system.
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+    let bridge_app = app.clone();
+    let bridge = tokio::spawn(async move {
+        while let Some(progress) = rx.recv().await {
+            let _ = bridge_app.emit("download://progress", progress);
+        }
+    });
+    let result = downloader::download(tx, child_state, url, save_path).await;
+    bridge.await.ok();
+    Ok(result)
 }
 
 #[tauri::command]

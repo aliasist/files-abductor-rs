@@ -1,23 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
-import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { AnimatePresence, motion } from "framer-motion";
 import { randomJoke, type JokePhase } from "./jokes";
+import { backend, type DownloadProgress } from "./backend";
 import "./style.css";
-
-interface DownloadProgress {
-  percent: number;
-  speed?: string;
-  eta?: string;
-  raw_line: string;
-}
-
-interface DownloadResult {
-  success: boolean;
-  final_path?: string;
-  error?: string;
-}
 
 type Phase = "idle" | "downloading" | "done" | "aborted" | "error";
 
@@ -49,9 +34,7 @@ export default function App() {
   const jokeIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    invoke<string>("get_dl_dir").then((dir) => {
-      setDlDir(dir);
-    });
+    backend.getDlDir().then(setDlDir);
   }, []);
 
   // Rotate jokes every ~2.4s while a phase is active, matching the original
@@ -69,32 +52,11 @@ export default function App() {
     };
   }, [phase]);
 
-  useEffect(() => {
-    const unlisten = listen<DownloadProgress>("download://progress", (event) => {
-      setProgress(event.payload);
-      setStatusText(
-        `🛸 Abducting... ${event.payload.percent.toFixed(1)}%${
-          event.payload.speed ? ` @ ${event.payload.speed}` : ""
-        }${event.payload.eta ? ` · ETA ${event.payload.eta}` : ""}`,
-      );
-    });
-    return () => {
-      unlisten.then((f) => f());
-    };
-  }, []);
-
   const handleBrowse = useCallback(async () => {
     const suggested = url.split("/").pop()?.split("?")[0] || "abducted-file";
-    const result = await openDialog({
-      directory: false,
-      multiple: false,
-      defaultPath: dlDir ? `${dlDir}/${suggested}` : suggested,
-      title: "Choose landing zone",
-    });
-    if (typeof result === "string") {
-      setSavePath(result);
-    }
-  }, [url, dlDir]);
+    const result = await backend.browseSavePath(suggested);
+    if (result) setSavePath(result);
+  }, [url]);
 
   const handlePaste = useCallback(async () => {
     try {
@@ -113,13 +75,21 @@ export default function App() {
     setStatusText("🛸 Aligning tractor beam...");
 
     try {
-      const result = await invoke<DownloadResult>("download_file", {
-        url: url.trim(),
-        savePath: finalSave,
+      const result = await backend.downloadFile(url.trim(), finalSave, (p) => {
+        setProgress(p);
+        setStatusText(
+          `🛸 Abducting... ${p.percent.toFixed(1)}%${p.speed ? ` @ ${p.speed}` : ""}${
+            p.eta ? ` · ETA ${p.eta}` : ""
+          }`,
+        );
       });
       if (result.success) {
         setPhase("done");
-        setStatusText(`✅ Landed safely at ${result.final_path}`);
+        setStatusText(
+          backend.kind === "remote"
+            ? "✅ Landed safely — pick where to save it."
+            : `✅ Landed safely at ${result.final_path}`,
+        );
       } else if (result.error?.toLowerCase().includes("abort")) {
         setPhase("aborted");
         setStatusText("🚨 Ejected. Mission scrubbed.");
@@ -134,7 +104,7 @@ export default function App() {
   }, [url, savePath, dlDir, accepted]);
 
   const handleEject = useCallback(async () => {
-    await invoke<boolean>("abort_download");
+    await backend.abortDownload();
     setPhase("aborted");
     setStatusText("🚨 Ejected. Mission scrubbed.");
   }, []);
@@ -171,20 +141,24 @@ export default function App() {
             </button>
           </div>
 
-          <label className="field-label">📂 Landing Zone</label>
-          <div className="input-row">
-            <input
-              type="text"
-              className="text-input"
-              placeholder={dlDir ? `${dlDir}/...` : "Auto-filled..."}
-              spellCheck={false}
-              readOnly
-              value={savePath}
-            />
-            <button className="btn btn-sm" onClick={handleBrowse} disabled={isBusy}>
-              📁 Browse
-            </button>
-          </div>
+          {backend.kind === "tauri" && (
+            <>
+              <label className="field-label">📂 Landing Zone</label>
+              <div className="input-row">
+                <input
+                  type="text"
+                  className="text-input"
+                  placeholder={dlDir ? `${dlDir}/...` : "Auto-filled..."}
+                  spellCheck={false}
+                  readOnly
+                  value={savePath}
+                />
+                <button className="btn btn-sm" onClick={handleBrowse} disabled={isBusy}>
+                  📁 Browse
+                </button>
+              </div>
+            </>
+          )}
 
           <div className="disclaimer">
             ⚠ DISCLAIMER* You are responsible for what you are authorized to abduct. Don't be a

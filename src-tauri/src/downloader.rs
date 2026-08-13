@@ -8,9 +8,9 @@ use serde::Serialize;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
+use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::Mutex;
 
 #[derive(Clone, Serialize)]
@@ -86,8 +86,12 @@ fn parse_progress_line(line: &str) -> Option<DownloadProgress> {
     })
 }
 
+/// Core download engine — used by both the Tauri desktop app (progress goes
+/// out as a Tauri event) and the standalone HTTP server for mobile clients
+/// (progress goes into an in-memory job record). Neither concern lives here;
+/// callers get progress via a plain channel instead.
 pub async fn download(
-    app: AppHandle,
+    progress_tx: UnboundedSender<DownloadProgress>,
     state: Arc<Mutex<Option<Child>>>,
     url: String,
     save_path: String,
@@ -201,24 +205,24 @@ pub async fn download(
     *state.lock().await = None; // drop any stale handle first
     let pid = child.id();
 
-    let app_stdout = app.clone();
+    let stdout_tx = progress_tx.clone();
     let stdout_task = tokio::spawn(async move {
         let mut lines = BufReader::new(stdout).lines();
         while let Ok(Some(line)) = lines.next_line().await {
             if let Some(progress) = parse_progress_line(&line) {
-                let _ = app_stdout.emit("download://progress", progress);
+                let _ = stdout_tx.send(progress);
             }
         }
     });
 
-    let app_stderr = app.clone();
+    let stderr_tx = progress_tx;
     let mut stderr_tail = String::new();
     let stderr_task = tokio::spawn(async move {
         let mut lines = BufReader::new(stderr).lines();
         let mut tail = String::new();
         while let Ok(Some(line)) = lines.next_line().await {
             if let Some(progress) = parse_progress_line(&line) {
-                let _ = app_stderr.emit("download://progress", progress);
+                let _ = stderr_tx.send(progress);
             } else {
                 tail = line;
             }
