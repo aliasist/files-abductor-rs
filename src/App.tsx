@@ -3,7 +3,6 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { AnimatePresence, motion } from "framer-motion";
-import Splash from "./components/Splash";
 import { randomJoke, type JokePhase } from "./jokes";
 import "./style.css";
 
@@ -38,9 +37,6 @@ function phaseToJokeBank(phase: Phase): JokePhase {
 }
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
-  const [splashStatus] = useState("This is a fun project about aliens lol enjoy...");
-
   const [url, setUrl] = useState("");
   const [savePath, setSavePath] = useState("");
   const [dlDir, setDlDir] = useState("");
@@ -143,10 +139,6 @@ export default function App() {
     setStatusText("🚨 Ejected. Mission scrubbed.");
   }, []);
 
-  if (showSplash) {
-    return <Splash status={splashStatus} onComplete={() => setShowSplash(false)} />;
-  }
-
   const isBusy = phase === "downloading";
 
   return (
@@ -230,6 +222,23 @@ export default function App() {
         </main>
 
         <div className="progress-area">
+          <AnimatePresence>
+            {isBusy && (
+              <motion.div
+                className="progress-ufo"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: [0, -4, 0] }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{
+                  opacity: { duration: 0.25 },
+                  y: { duration: 1.6, repeat: Infinity, ease: "easeInOut" },
+                }}
+                aria-hidden="true"
+              >
+                🛸
+              </motion.div>
+            )}
+          </AnimatePresence>
           <p className="status">{statusText}</p>
           <div className="track">
             <motion.div

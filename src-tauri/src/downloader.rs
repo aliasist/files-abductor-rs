@@ -111,6 +111,57 @@ pub async fn download(
     }
 
     let mut cmd = Command::new(ytdlp_binary());
+    // The AppImage runtime points a whole family of interpreter/loader env
+    // vars at its own bundled directory (/tmp/.mount_XXXX/usr/...) so the
+    // Tauri/WebKit binary finds compatible copies of its GTK dependencies.
+    // Every child process inherits that by default — including yt-dlp, a
+    // Python program. Two are actually fatal to it:
+    //   - LD_LIBRARY_PATH: makes Python's C extensions (_ssl, _hashlib,
+    //     zlib, ...) load the AppImage's bundled library versions instead
+    //     of the ones they were built against — segfaults from the ABI
+    //     mismatch (the "<no Python frame>" fault-handler crash we hit).
+    //   - PYTHONHOME / PYTHONPATH: point the interpreter's stdlib search at
+    //     the AppImage's bundle instead of the real Python install, so it
+    //     can't even find its own `encodings` module and fails at startup
+    //     before running a single line of yt-dlp.
+    // The rest (PERLLIB, QT_PLUGIN_PATH, GST_PLUGIN_SYSTEM_PATH*, GTK_*,
+    // GIO/GSETTINGS/GDK_PIXBUF paths, PATH's mount-dir prefix) don't affect
+    // yt-dlp but are stripped too so nothing else it shells out to
+    // (ffmpeg, etc.) can pick up bundle-specific plugin/library paths
+    // either — yt-dlp should see an environment as if it were launched
+    // normally from a terminal, not from inside the AppImage.
+    for var in [
+        "LD_LIBRARY_PATH",
+        "LD_PRELOAD",
+        "PYTHONHOME",
+        "PYTHONPATH",
+        "PERLLIB",
+        "PERL5LIB",
+        "QT_PLUGIN_PATH",
+        "GST_PLUGIN_SYSTEM_PATH",
+        "GST_PLUGIN_SYSTEM_PATH_1_0",
+        "GIO_EXTRA_MODULES",
+        "GSETTINGS_SCHEMA_DIR",
+        "GDK_PIXBUF_MODULE_FILE",
+        "GTK_PATH",
+        "GTK_EXE_PREFIX",
+        "GTK_DATA_PREFIX",
+        "GTK_IM_MODULE_FILE",
+    ] {
+        cmd.env_remove(var);
+    }
+    // PATH itself gets the AppImage's own bin dirs prepended
+    // (/tmp/.mount_XXXX/usr/bin/ etc) — strip just that prefix rather than
+    // removing PATH outright, so yt-dlp can still find ffmpeg and itself.
+    if let Ok(path) = std::env::var("PATH") {
+        if let Some(appdir) = std::env::var("APPDIR").ok().filter(|d| !d.is_empty()) {
+            let cleaned: Vec<&str> = path
+                .split(':')
+                .filter(|p| !p.starts_with(&appdir))
+                .collect();
+            cmd.env("PATH", cleaned.join(":"));
+        }
+    }
     cmd.args([
         &url,
         "--newline",

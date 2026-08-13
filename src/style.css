@@ -12,186 +12,6 @@ body {
   user-select: none;
 }
 
-/* ── Splash ─────────────────────────────────────────────────────── */
-
-.splash {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: radial-gradient(ellipse at center, #0a1220 0%, #05080d 70%);
-  z-index: 999;
-}
-
-.splash-content {
-  position: relative;
-  text-align: center;
-  padding: 2rem;
-}
-
-.stars {
-  position: absolute;
-  inset: -80px -40px auto -40px;
-  height: 220px;
-}
-
-.star {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.8);
-}
-
-.ufo-scene {
-  position: relative;
-  width: 280px;
-  height: 220px;
-  margin: 0 auto;
-}
-
-.ufo {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 140px;
-}
-
-.ufo-dome {
-  width: 56px;
-  height: 32px;
-  margin: 0 auto;
-  background: linear-gradient(180deg, #a8e6ff, #4fa8d8);
-  border-radius: 50% 50% 0 0;
-  box-shadow: 0 0 20px rgba(79, 168, 216, 0.6);
-}
-
-.ufo-body {
-  width: 140px;
-  height: 24px;
-  margin-top: -4px;
-  background: linear-gradient(180deg, #6b7280, #374151);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-.ufo-light {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #7ce87c;
-  box-shadow: 0 0 10px 2px #7ce87c;
-}
-
-.beam {
-  position: absolute;
-  top: 68px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90px;
-  height: 120px;
-  background: linear-gradient(
-    180deg,
-    rgba(124, 232, 124, 0.55),
-    rgba(124, 232, 124, 0.05)
-  );
-  clip-path: polygon(35% 0%, 65% 0%, 100% 100%, 0% 100%);
-  filter: blur(1px);
-}
-
-.cow {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 50px;
-}
-
-.cow-body {
-  width: 50px;
-  height: 26px;
-  background: #f5f5f5;
-  border-radius: 40%;
-}
-
-.cow-head {
-  width: 18px;
-  height: 16px;
-  background: #f5f5f5;
-  border-radius: 40%;
-  margin: -4px auto 0;
-}
-
-.cow-spots {
-  position: absolute;
-  top: 4px;
-  left: 8px;
-  width: 12px;
-  height: 10px;
-  background: #2d2d2d;
-  border-radius: 50%;
-}
-
-.cow-legs {
-  display: flex;
-  justify-content: space-evenly;
-  margin-top: -2px;
-}
-
-.leg {
-  width: 4px;
-  height: 12px;
-  background: #d4d4d4;
-}
-
-.ground {
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 120px;
-  height: 4px;
-  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.08), transparent);
-  border-radius: 50%;
-}
-
-.splash-title {
-  margin: 1.5rem 0 0;
-  font-size: 2.4rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  background: linear-gradient(180deg, #a8e6ff, #7ce87c);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.splash-sub {
-  margin: 0.25rem 0;
-  letter-spacing: 0.3em;
-  font-size: 0.85rem;
-  color: #9aa4b2;
-}
-
-.splash-credit {
-  margin: 0.5rem 0 0;
-  font-size: 0.7rem;
-  color: #6b7280;
-}
-
-.splash-status {
-  margin-top: 1rem;
-  font-size: 0.8rem;
-  color: #7ce87c;
-  min-height: 1.2em;
-}
-
 /* ── Main App ───────────────────────────────────────────────────── */
 
 .app {
@@ -341,10 +161,19 @@ body {
   margin-top: 1.25rem;
 }
 
+.progress-ufo {
+  text-align: center;
+  font-size: 1.6rem;
+  line-height: 1;
+  margin-bottom: 4px;
+  filter: drop-shadow(0 4px 10px rgba(79, 168, 216, 0.5));
+}
+
 .status {
   margin: 0 0 6px;
   font-size: 0.8rem;
   color: #cbd5e1;
+  text-align: center;
 }
 
 .track {
