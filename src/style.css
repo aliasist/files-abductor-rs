@@ -23,19 +23,6 @@ body {
   padding: 2rem;
 }
 
-.badge-protected {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: rgba(124, 232, 124, 0.12);
-  border: 1px solid rgba(124, 232, 124, 0.4);
-  color: #7ce87c;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 0.7rem;
-  cursor: default;
-}
-
 .app-inner {
   width: 100%;
   max-width: 560px;

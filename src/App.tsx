@@ -143,13 +143,6 @@ export default function App() {
 
   return (
     <div className="app">
-      <button
-        className="badge-protected"
-        title="Open Source | Protected & Verified Safety."
-      >
-        🛡️ PROTECTED
-      </button>
-
       <motion.div
         className="app-inner"
         initial={{ opacity: 0, y: 16 }}
