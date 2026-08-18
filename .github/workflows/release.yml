@@ -10,6 +10,9 @@ on:
       - "v*.*.*"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     strategy:
@@ -20,8 +23,12 @@ jobs:
             args: ""
           - platform: windows-latest
             args: ""
+          # Plain (non-universal) build: the universal-apple-darwin lipo-merge
+          # step only merges the main app binary, not the second `abductor-server`
+          # [[bin]] target this crate also declares, which breaks .app bundling.
+          # This targets the runner's native arch (Apple Silicon) only.
           - platform: macos-latest
-            args: "--target universal-apple-darwin"
+            args: ""
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -36,8 +43,6 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Rust build cache
         uses: swatinem/rust-cache@v2
