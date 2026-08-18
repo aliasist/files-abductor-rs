@@ -1,6 +1,7 @@
 [package]
 name = "aliasist-files-abductor"
 version = "3.0.0"
+default-run = "aliasist-files-abductor"
 description = "Aliasist Files Abductor — YouTube & direct URL downloader"
 authors = ["dev_aliasist"]
 license = "Unlicense"
