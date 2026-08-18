@@ -3,6 +3,8 @@
 A ground-up rewrite of [Aliasist Files Abductor](https://github.com/aliasist/files-abductor)
 in Rust + Tauri — same alien-abduction theme and jokes, new engine.
 
+![Aliasist Files Abductor main window](./docs/screenshots/app-main.png)
+
 - YouTube & direct URL downloads via `yt-dlp`, run through Tokio so progress
   parsing never blocks the UI
 - Cinematic splash sequence (GSAP timeline: UFO descends, beam charges, cow
